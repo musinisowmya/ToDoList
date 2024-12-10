@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List App</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-image: url('todolist2.jpg'); /* Path to your background image */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .todo-container {
+            background-color: rgba(255, 255, 255, 0.9); /* Slight transparency for a modern look */
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            width: 400px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px); /* Adds a glassmorphism effect */
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 28px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .todo-header {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        #taskInput {
+            flex-grow: 1;
+            padding: 10px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        #addTask {
+            background-color: lightskyblue;
+            color: white;
+            border: 2px solid: blue; /* Border added */
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #addTask:hover {
+            background-color: lightskyblue;
+            transform: scale(1.05);
+            border-color: lightskyblue; /* Border color change on hover */
+        }
+
+        #taskList {
+            list-style-type: none;
+            padding: 0;
+            max-height: 300px;
+            overflow-y: auto; /* Scrollable if too many tasks */
+            margin-bottom: 20px;
+        }
+
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .task-item:hover {
+            background-color: #f1f1f1;
+            transform: translateY(-2px);
+        }
+
+        .task-item.completed {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .task-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .delete-btn, .complete-btn {
+            background: none;
+            border: 2px solid transparent; /* Border added for buttons */
+            cursor: pointer;
+            font-size: 16px;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background-color 0.2s, transform 0.2s, border-color 0.2s;
+        }
+
+        .delete-btn {
+            color: #f44336;
+        }
+
+        .delete-btn:hover {
+            background-color: #fcdcdc;
+            transform: scale(1.1);
+            border-color: #f44336; /* Border color change on hover */
+        }
+
+        .complete-btn {
+            color: lightskyblue;
+        }
+
+        .complete-btn:hover {
+            background-color: #d4f7dc;
+            transform: scale(1.1);
+            border-color: lightskyblue; /* Border color change on hover */
+        }
+
+        .filter-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .filter-btn {
+            background-color: #e0e0e0;
+            border: 2px solid #ddd; /* Border added */
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s, border-color 0.2s;
+        }
+
+        .filter-btn.active {
+            background-color: lightskyblue;
+            color: white;
+            font-weight: bold;
+            border-color: lightskyblue; /* Border color change for active button */
+        }
+
+        .filter-btn:hover {
+            transform: scale(1.05);
+            border-color: lightskyblue; /* Border color change on hover */
+        }
+    </style>
+</head>
+<body>
+    <div class="todo-container">
+        <h1>Welcome to ToDoList</h1> <!-- Added heading -->
+        <div class="todo-header">
+            <input type="text" id="taskInput" placeholder="Enter a new task">
+            <button id="addTask">Add Task</button>
+        </div>
+        <ul id="taskList"></ul>
+        <div class="filter-container">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="active">Active</button>
+            <button class="filter-btn" data-filter="completed">Completed</button>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const taskInput = document.getElementById('taskInput');
+        const addTaskButton = document.getElementById('addTask');
+        const taskList = document.getElementById('taskList');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+
+        // Tasks array to store tasks
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+        // Function to save tasks to local storage
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // Function to render tasks
+        function renderTasks(filter = 'all') {
+            taskList.innerHTML = '';
+            const filteredTasks = tasks.filter(task => {
+                if (filter === 'active') return !task.completed;
+                if (filter === 'completed') return task.completed;
+                return true;
+            });
+
+            filteredTasks.forEach((task, index) => {
+                const li = document.createElement('li');
+                li.className = 'task-item' + (task.completed ? ' completed' : '');
+                li.innerHTML = `
+                    <span>${task.text}</span>
+                    <div class="task-buttons">
+                        <button class="complete-btn">✓</button>
+                        <button class="delete-btn">✗</button>
+                    </div>
+                `;
+
+                // Complete task button
+                li.querySelector('.complete-btn').addEventListener('click', () => {
+                    tasks[tasks.indexOf(task)].completed = !task.completed;
+                    saveTasks();
+                    renderTasks(getCurrentFilter());
+                });
+
+                // Delete task button
+                li.querySelector('.delete-btn').addEventListener('click', () => {
+                    tasks = tasks.filter(t => t !== task);
+                    saveTasks();
+                    renderTasks(getCurrentFilter());
+                });
+
+                taskList.appendChild(li);
+            });
+        }
+
+        // Function to add a new task
+        function addTask() {
+            const taskText = taskInput.value.trim();
+            if (taskText) {
+                tasks.push({ text: taskText, completed: false });
+                taskInput.value = '';
+                saveTasks();
+                renderTasks(getCurrentFilter());
+            }
+        }
+
+        // Get current active filter
+        function getCurrentFilter() {
+            const activeFilter = document.querySelector('.filter-btn.active');
+            return activeFilter ? activeFilter.dataset.filter : 'all';
+        }
+
+        // Event Listeners
+        addTaskButton.addEventListener('click', addTask);
+        taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTask();
+        });
+
+        // Filter buttons event listeners
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                renderTasks(button.dataset.filter);
+            });
+        });
+
+        // Initial render
+        renderTasks();
+    </script>
+</body>
+</html>
